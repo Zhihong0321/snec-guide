@@ -15,6 +15,7 @@ COPY requirements-web.txt .
 RUN pip install --no-cache-dir -r requirements-web.txt
 
 COPY web/ ./web/
+COPY enrichment_ops.py ./
 COPY expo_map_guide.md sections_analysis.md ./
 COPY floor_plans/ ./floor_plans/
 COPY official_commercial_guide.pdf official_2026_venue_guide.pdf ./
