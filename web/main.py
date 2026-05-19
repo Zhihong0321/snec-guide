@@ -15,6 +15,7 @@ from web.chat_models import DEFAULT_CHAT_MODEL, models_for_api, resolve_model
 from web.images import MAX_IMAGES_PER_MESSAGE, preprocess_images
 from web.llm import stream_chat
 from web.env import ROOT
+from web.enrichment_api import router as enrichment_router
 from web.maps_api import router as maps_router
 from web.visit_api import router as visit_router
 from web.web_search import server_web_search_enabled
@@ -37,6 +38,7 @@ if FLOOR_PLANS_DIR.is_dir():
     app.mount("/floor_plans", StaticFiles(directory=str(FLOOR_PLANS_DIR)), name="floor_plans")
 app.include_router(visit_router)
 app.include_router(maps_router)
+app.include_router(enrichment_router)
 
 
 class ChatMessage(BaseModel):
@@ -82,6 +84,11 @@ async def chat_page():
 @app.get("/maps")
 async def maps_page():
     return FileResponse(STATIC_DIR / "maps.html")
+
+
+@app.get("/enrich")
+async def enrich_dashboard_page():
+    return FileResponse(STATIC_DIR / "enrich.html")
 
 
 @app.get("/exhibitor/{exhibitor_id:int}")

@@ -41,7 +41,7 @@ def pick_port(preferred: int, tries: int = 10) -> int:
 
 def _open_browser(port: int) -> None:
     time.sleep(1.0)
-    webbrowser.open(f"http://127.0.0.1:{port}/")
+    webbrowser.open(f"http://127.0.0.1:{port}/enrich")
 
 
 if __name__ == "__main__":

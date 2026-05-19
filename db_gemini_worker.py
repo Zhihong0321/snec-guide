@@ -23,17 +23,23 @@ import time
 import psycopg2
 
 from db_ai_enrich import (
-    DB_URL,
     SYSTEM_PROMPT,
     apply_enrichment,
+    print_status,
+    reclaim_stale_locks,
+    resolve_agent_id,
+)
+from enrichment_ops import (
+    DB_URL,
     claim_next,
     ensure_schema,
     mark_done,
-    print_status,
-    reclaim_stale_locks,
+    register_worker,
     release_pending,
-    resolve_agent_id,
+    unregister_worker,
 )
+
+WORKER_TYPE = "gemini"
 
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "").strip()
 GEMINI_TIMEOUT = int(os.environ.get("GEMINI_TIMEOUT_SEC", "300"))
@@ -177,29 +183,33 @@ def main():
     with psycopg2.connect(DB_URL) as conn:
         ensure_schema(conn)
         reclaim_stale_locks(conn, minutes=int(os.environ.get("AI_ENRICH_STALE_MINUTES", "90")))
+        register_worker(conn, agent_id, WORKER_TYPE)
 
-        for n in range(batch):
-            row = claim_next(conn, agent_id, exhibitor_id=None)
-            if not row:
-                print("[*] No pending rows.")
-                break
+        try:
+            for n in range(batch):
+                row = claim_next(conn, agent_id, WORKER_TYPE, exhibitor_id=None)
+                if not row:
+                    print("[*] No pending rows.")
+                    break
 
-            rid = row["id"]
-            name = (row.get("company_name_cn") or "")[:40]
-            print(f"[*] [{agent_id}] id={rid} {name}")
+                rid = row["id"]
+                name = (row.get("company_name_cn") or "")[:40]
+                print(f"[*] [{agent_id}] id={rid} {name}")
 
-            try:
-                result = run_gemini_cli(build_gemini_prompt(row, agent_id))
-                updates = apply_enrichment(conn, row, result, agent_id, dry_run=False)
-                mark_done(conn, rid, agent_id, dry_run=False)
-                print(f"    + {list(updates.keys()) or '(no changes)'} → DONE")
-                ok += 1
-            except Exception as e:
-                print(f"[-] id={rid} failed: {e}")
-                release_pending(conn, rid, agent_id, dry_run=False)
-                print("    → pending (released)")
+                try:
+                    result = run_gemini_cli(build_gemini_prompt(row, agent_id))
+                    updates = apply_enrichment(conn, row, result, agent_id, dry_run=False)
+                    mark_done(conn, rid, agent_id)
+                    print(f"    + {list(updates.keys()) or '(no changes)'} → DONE")
+                    ok += 1
+                except Exception as e:
+                    print(f"[-] id={rid} failed: {e}")
+                    release_pending(conn, rid, agent_id)
+                    print("    → pending (released)")
 
-            time.sleep(DELAY_SEC)
+                time.sleep(DELAY_SEC)
+        finally:
+            unregister_worker(conn, agent_id)
 
         print_status(conn)
 
