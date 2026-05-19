@@ -187,6 +187,7 @@ def parse_args(argv: list[str]) -> dict:
     stale_minutes = int(os.environ.get("AI_ENRICH_STALE_MINUTES", "90"))
     json_payload = None
     json_file = None
+    worker_type = os.environ.get("AI_WORKER_TYPE", "cursor_ide").strip()
 
     for arg in argv[1:]:
         if arg.isdigit():
@@ -201,6 +202,8 @@ def parse_args(argv: list[str]) -> dict:
             json_payload = arg.split("=", 1)[1]
         elif arg.startswith("--json-file="):
             json_file = arg.split("=", 1)[1]
+        elif arg.startswith("--worker-type="):
+            worker_type = arg.split("=", 1)[1].strip()
 
     return {
         "dry_run": dry_run,
@@ -217,6 +220,7 @@ def parse_args(argv: list[str]) -> dict:
         "stale_minutes": stale_minutes,
         "json_payload": json_payload,
         "json_file": json_file,
+        "worker_type": worker_type,
     }
 
 
@@ -726,7 +730,12 @@ def main():
         reclaim_stale_locks(conn, minutes=opts["stale_minutes"])
 
         if opts["claim"]:
-            row = claim_next(conn, agent_id, exhibitor_id=opts["exhibitor_id"])
+            import enrichment_ops as eops
+
+            eops.register_worker(conn, agent_id, opts["worker_type"])
+            row = eops.claim_next(
+                conn, agent_id, opts["worker_type"], exhibitor_id=opts["exhibitor_id"]
+            )
             if not row:
                 print("[*] No pending rows to claim.")
                 return
@@ -734,9 +743,11 @@ def main():
             return
 
         if opts["release"]:
+            import enrichment_ops as eops
+
             if opts["exhibitor_id"] is None:
                 raise SystemExit("--release requires --id=<exhibitor_id>")
-            release_pending(conn, opts["exhibitor_id"], agent_id, dry_run=False)
+            eops.release_pending(conn, opts["exhibitor_id"], agent_id)
             print(f"[*] id={opts['exhibitor_id']} → enrichment_status=pending")
             return
 
