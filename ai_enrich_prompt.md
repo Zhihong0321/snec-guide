@@ -1,13 +1,14 @@
 # SNEC exhibitor AI enrichment
 
-## Two ways to enrich
+## Ways to enrich
 
-| Mode | Who does the AI work? | API key? |
-|------|------------------------|----------|
-| **Cursor (recommended)** | You + Cursor Agent in chat | **No** — uses your Cursor subscription |
-| **Batch `--auto`** | Python script calls OpenAI/MiniMax API | **Yes** — `OPENAI_API_KEY` in `.env` |
+| Mode | Who does the AI? | API key? |
+|------|------------------|----------|
+| **Cursor chat** | You + Cursor Agent | No (Cursor subscription) |
+| **Parallel Gemini CLI** | `gemini` headless × N workers | No `OPENAI_API_KEY` — uses Google/Gemini CLI login |
+| **Batch `--auto`** | Python → OpenAI/MiniMax API | Yes — `OPENAI_API_KEY` |
 
-`db_ai_enrich.py` was originally built for unattended batch (`--auto`). For parallel Cursor sessions, use **`--claim` / `--complete` / `--release`** only.
+Parallel Gemini CLI uses the same `enrichment_status` locks (`agent001` …) so workers never overwrite each other.
 
 ---
 
@@ -74,6 +75,47 @@ python db_ai_enrich.py --status
 ```
 
 Ten parallel Cursor chats → `agent001` … `agent010`, each running the loop above.
+
+---
+
+## Parallel Gemini CLI (faster, no OPENAI_API_KEY)
+
+**Yes — Cursor can start multiple workers**, each running `gemini` in headless mode. The repo script handles claim → Gemini → DB → DONE.
+
+**One-time setup:**
+
+```bash
+npm install -g @google/gemini-cli
+gemini    # log in with Google once
+```
+
+**Start 5 workers (5 separate terminal windows on Windows):**
+
+```powershell
+.\run_gemini_workers.ps1 -Count 5
+```
+
+Or manually in 5 terminals:
+
+```bash
+python db_gemini_worker.py --agent=agent001
+python db_gemini_worker.py --agent=agent002
+# …
+```
+
+**Monitor queue:**
+
+```bash
+python db_ai_enrich.py --status
+```
+
+**Limits (important):**
+
+- All workers usually share **one Google account** → shared rate limit (~60 req/min on free tier). **5 workers** is safer than 10.
+- Each worker must use a **unique** `--agent=` id.
+- Cursor Agent can run `.\run_gemini_workers.ps1` for you via the terminal tool.
+
+Optional env: `GEMINI_CMD=gemini`, `GEMINI_MODEL=...`, `GEMINI_WORKER_DELAY_SEC=2`.
 
 ---
 

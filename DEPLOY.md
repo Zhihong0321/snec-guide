@@ -31,12 +31,17 @@ git push -u origin main
 | `OPENAI_BASE_URL` | No | Default `https://www.okaoi.com/v1` |
 | `OPENAI_MODEL` | No | Default `MiniMax-M2.7` |
 | `DEFAULT_CHAT_MODEL` | No | Same as `OPENAI_MODEL` if unset |
+| `MINIMAX_VLM_API_KEY` | For images* | Official MiniMax key for `api.minimax.io` vision (OKAI chat URL has no VLM route) |
+| `MINIMAX_VLM_BASE_URL` | No | Default `https://api.minimax.io/v1` |
+| `UNIAPI_KEY` | Fallback* | Gemini vision fallback if MiniMax VLM fails |
 | `UNIAPI_KEY` | Yes* | For Gemini model in chat |
 | `UNIAPI_BASE_URL` | No | Default `https://api.uniapi.io` |
 | `GEMINI_MODEL` | No | Default `gemini-3.1-flash-lite` |
 | `ENABLE_WEB_SEARCH` | No | `true` / `false` (default on) |
 
 \*At least one of `OPENAI_API_KEY` or `UNIAPI_KEY` depending on which models you use.
+
+\*Image attachments on MiniMax M2.7: chat uses `OPENAI_API_KEY` (OKAI); images are analyzed via MiniMax VLM on `api.minimax.io` (`MINIMAX_VLM_API_KEY` or `MINIMAX_API_KEY`), or Gemini (`UNIAPI_KEY`) if VLM fails. Run `python scripts/verify_image_chat.py` after deploy.
 
 `PORT` is set automatically by Railway — do not override it.
 

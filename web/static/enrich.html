@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Enrichment — SNEC 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body data-nav-active="enrich">
+  <div class="bg-glow" aria-hidden="true"></div>
+  <div class="app app-wide">
+    <header class="header">
+      <a href="/" class="logo-link" aria-label="Home"><span class="logo" aria-hidden="true">☀</span></a>
+      <div class="header-text">
+        <h1>Enrichment monitor</h1>
+        <p>Live workers · Gemini CLI · Cursor IDE</p>
+      </div>
+      <nav id="siteNav" class="nav-links" aria-label="Main"></nav>
+    </header>
+
+    <section class="panel enrich-hero">
+      <div class="enrich-hero-row">
+        <div>
+          <h2 class="panel-title">Queue</h2>
+          <p class="muted small" id="lastRefresh">Loading…</p>
+        </div>
+        <label class="enrich-poll">
+          <input type="checkbox" id="autoRefresh" checked />
+          Auto-refresh (3s)
+        </label>
+      </div>
+      <div class="enrich-stats" id="stats"></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-title">Active workers</h2>
+      <p class="muted small">Registered processes (Gemini CLI, Cursor, etc.)</p>
+      <div id="workers" class="enrich-workers"></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-title">Currently updating</h2>
+      <p class="muted small">Rows locked by an agent id</p>
+      <div id="locked" class="enrich-table-wrap"></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-title">Recently completed</h2>
+      <div id="recent" class="enrich-table-wrap"></div>
+    </section>
+
+    <footer class="footer-spacer"></footer>
+  </div>
+  <script src="/static/site-nav.js"></script>
+  <script src="/static/enrich.js"></script>
+</body>
+</html>
