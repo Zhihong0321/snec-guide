@@ -30,6 +30,7 @@ WORKER_LABELS = {
     "gemini": "Gemini CLI",
     "cursor_cli": "Cursor CLI",
     "cursor_ide": "Cursor IDE",
+    "antigravity": "Antigravity Agent",
     "manual": "Manual / script",
     "auto": "OpenAI auto",
 }
@@ -38,6 +39,7 @@ ROW_COLS = (
     "id, company_name_cn, company_name_en, products_services, website_url, "
     "country, state_province, hall, booth, booth_display, enrichment_status, worker_type"
 )
+ROW_COLS_E = ", ".join(f"e.{c.strip()}" for c in ROW_COLS.split(","))
 
 
 def connect():
@@ -207,7 +209,7 @@ def claim_next(
                 SET {claim_set}
                 FROM picked
                 WHERE e.id = picked.id
-                RETURNING {ROW_COLS}
+                RETURNING {ROW_COLS_E}
                 """,
                 params,
             )

@@ -6,3 +6,15 @@ __pycache__/
 venv/
 node_modules/
 .DS_Store
+
+# AI exhibitor enrichment (local ops — not committed)
+ai_enrich_prompt.md
+db_ai_enrich.py
+db_gemini_worker.py
+enrichment_ops.py
+start_enrich.bat
+run_gemini_workers.ps1
+web/enrichment_api.py
+web/static/enrich.html
+web/static/enrich.js
+exhibitors_enriched.csv

@@ -41,7 +41,7 @@ def pick_port(preferred: int, tries: int = 10) -> int:
 
 def _open_browser(port: int) -> None:
     time.sleep(1.0)
-    webbrowser.open(f"http://127.0.0.1:{port}/enrich")
+    webbrowser.open(f"http://127.0.0.1:{port}/")
 
 
 if __name__ == "__main__":
@@ -56,11 +56,12 @@ if __name__ == "__main__":
     if port != preferred:
         print(f"Port {preferred} busy — using {port} instead.", flush=True)
 
-    enrich_url = f"http://127.0.0.1:{port}/enrich"
+    enrich_path = ROOT / "web" / "static" / "enrich.html"
     print("", flush=True)
     print("  SNEC 2026 Guide", flush=True)
-    print(f"  Home:       {url}", flush=True)
-    print(f"  Enrichment: {enrich_url}", flush=True)
+    print(f"  {url}", flush=True)
+    if enrich_path.is_file():
+        print(f"  Enrichment: http://127.0.0.1:{port}/enrich (local only)", flush=True)
     print("  Leave this window open. Close it to stop the app.", flush=True)
     print("", flush=True)
 

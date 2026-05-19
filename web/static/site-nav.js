@@ -2,7 +2,6 @@
 (function () {
   const ITEMS = [
     { id: "home", href: "/", label: "Home" },
-    { id: "enrich", href: "/enrich", label: "Enrichment" },
     { id: "chat", href: "/chat", label: "AI chat" },
     { id: "guides", href: "/maps", label: "Guides" },
     { id: "visit", href: "/exhibitor", label: "Visit log" },
