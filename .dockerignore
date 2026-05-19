@@ -1,0 +1,44 @@
+.env
+.env.*
+!.env.example
+.git
+.gitignore
+__pycache__
+*.pyc
+.venv
+venv
+node_modules
+.DS_Store
+uploads
+
+# Local dev launchers
+start_web.bat
+OPEN SNEC GUIDE.bat
+run_web.py
+
+# DB / scrape tooling (not needed in the web container)
+db_*.py
+_fetch_all_exhibitors.py
+extract_apis.py
+find_snec_endpoints.py
+run_snec_research.py
+search_js.py
+test_api.py
+
+# Large or scrape-only assets (allow official guides for /maps downloads)
+*.pdf
+!official_commercial_guide.pdf
+!official_2026_venue_guide.pdf
+exhibitors_list.csv
+exhibitors_enriched.csv
+chunk*.js
+injection_*.js
+companyDetail.js
+exHallList.js
+hall_*.js
+exhibitionHall*.js
+_*.html
+
+# Docs not loaded by the web app at runtime
+SNEC_2026_RESEARCH.md
+agent-transcripts

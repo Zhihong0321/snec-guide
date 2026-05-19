@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Exhibitor visit log · SNEC 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body data-nav-active="visit">
+  <div class="bg-glow" aria-hidden="true"></div>
+  <div class="app app-wide">
+    <header class="header">
+      <a href="/" class="logo-link" aria-label="SNEC 2026 Guide home">
+        <span class="logo" aria-hidden="true">☀</span>
+      </a>
+      <div class="header-text">
+        <h1>Exhibitor visit log</h1>
+        <p>Notes &amp; photos per booth · tied to your browser cookie</p>
+      </div>
+      <nav id="siteNav" class="nav-links" aria-label="Main"></nav>
+    </header>
+
+    <div class="page-toolbar">
+      <button type="button" id="backBtn" class="btn-back">← Back</button>
+    </div>
+
+    <section class="panel user-panel">
+      <h2 class="panel-title">You</h2>
+      <p class="panel-hint">No login — we set a cookie on first visit. Name yourself so notes show who wrote them.</p>
+      <div class="row">
+        <label class="sr-only" for="displayName">Your display name</label>
+        <input type="text" id="displayName" class="input" placeholder="Your name (e.g. Alex)" maxlength="100" />
+        <button type="button" id="saveName" class="btn-secondary">Save name</button>
+      </div>
+      <p id="userMeta" class="muted small"></p>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-title">Find exhibitor</h2>
+      <div class="row">
+        <input type="search" id="searchQ" class="input flex-1" placeholder="Search company (CN / EN)…" />
+        <button type="button" id="searchBtn" class="btn-secondary">Search</button>
+      </div>
+      <ul id="searchResults" class="search-results"></ul>
+    </section>
+
+    <section id="detailSection" class="panel hidden">
+      <h2 class="panel-title" id="exTitle">—</h2>
+      <p id="exMeta" class="muted"></p>
+
+      <div class="grid-2">
+        <div>
+          <h3 class="sub-title">Your notes</h3>
+          <ul id="notesList" class="note-list"></ul>
+          <form id="noteForm" class="stack">
+            <textarea id="noteText" class="input textarea" rows="3" placeholder="Write a note…" required></textarea>
+            <button type="submit" class="btn-primary">Add note</button>
+          </form>
+        </div>
+        <div>
+          <h3 class="sub-title">Your images</h3>
+          <div id="imageGrid" class="image-grid"></div>
+          <form id="imageForm" class="stack">
+            <label class="file-label">
+              <input type="file" id="imageFile" accept="image/jpeg,image/png,image/gif,image/webp" />
+              <span>Choose image</span>
+            </label>
+            <input type="text" id="imageCaption" class="input" placeholder="Caption (optional)" maxlength="500" />
+            <button type="submit" class="btn-primary">Upload</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer-spacer"></footer>
+  </div>
+  <script src="/static/site-nav.js"></script>
+  <script src="/static/register-gate.js"></script>
+  <script src="/static/exhibitor.js"></script>
+</body>
+</html>

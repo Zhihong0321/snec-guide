@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI chat · SNEC 2026 Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body data-nav-active="chat">
+  <div class="bg-glow" aria-hidden="true"></div>
+  <div class="app">
+    <header class="header">
+      <a href="/" class="logo-link" aria-label="SNEC 2026 Guide home">
+        <span class="logo" aria-hidden="true">☀</span>
+      </a>
+      <div class="header-text">
+        <h1>SNEC 2026 Guide</h1>
+        <p>PV+ &amp; Smart Energy · Shanghai NECC · Jun 3–5, 2026</p>
+      </div>
+      <nav id="siteNav" class="nav-links" aria-label="Main"></nav>
+      <span id="status" class="status" title="API status">…</span>
+    </header>
+
+    <main id="chat" class="chat" role="log" aria-live="polite"></main>
+
+    <footer class="composer">
+      <div class="composer-bar" aria-label="Chat options">
+        <label for="modelSelect" class="model-label">Model</label>
+        <select id="modelSelect" class="model-select" title="Choose AI model"></select>
+        <label class="toggle-wrap" title="Fetch DuckDuckGo snippets before each answer">
+          <input type="checkbox" id="webSearchToggle" checked />
+          <span>Web search</span>
+        </label>
+      </div>
+      <form id="form" class="composer-form">
+        <textarea
+          id="input"
+          rows="1"
+          placeholder="Ask about exhibitors, halls, metro, products…"
+          autocomplete="off"
+        ></textarea>
+        <button type="submit" id="send" aria-label="Send">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+          </svg>
+        </button>
+      </form>
+      <p class="hint">MiniMax / Gemini · exhibitor database · toggle web search for live snippets</p>
+    </footer>
+  </div>
+  <script src="/static/site-nav.js"></script>
+  <script src="/static/register-gate.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

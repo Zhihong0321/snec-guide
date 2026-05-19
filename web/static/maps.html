@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Guides &amp; floor plans · SNEC 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body data-nav-active="guides">
+  <div class="bg-glow" aria-hidden="true"></div>
+  <div class="app app-wide">
+    <header class="header">
+      <a href="/" class="logo-link" aria-label="SNEC 2026 Guide home">
+        <span class="logo" aria-hidden="true">☀</span>
+      </a>
+      <div class="header-text">
+        <h1>Guides &amp; floor plans</h1>
+        <p>Official PDFs and NECC hall maps</p>
+      </div>
+      <nav id="siteNav" class="nav-links" aria-label="Main"></nav>
+    </header>
+
+    <section class="panel">
+      <h2 class="panel-title">Official PDFs</h2>
+      <p class="panel-hint">Download the venue and commercial guides for offline use at the show.</p>
+      <ul id="pdfList" class="pdf-list"></ul>
+    </section>
+
+    <section class="panel">
+      <div class="maps-toolbar">
+        <h2 class="panel-title">Hall floor plans</h2>
+        <input type="search" id="mapFilter" class="input maps-filter" placeholder="Filter halls (e.g. 8.2H)…" />
+      </div>
+      <p class="panel-hint">Tap a map to view full size. Overview shows the NECC four-leaf layout.</p>
+      <div id="mapGrid" class="map-grid"></div>
+    </section>
+
+    <footer class="footer-spacer"></footer>
+  </div>
+
+  <dialog id="mapLightbox" class="map-lightbox">
+    <div class="map-lightbox-inner">
+      <button type="button" id="mapLightboxClose" class="map-lightbox-close" aria-label="Close">×</button>
+      <p id="mapLightboxTitle" class="map-lightbox-title"></p>
+      <img id="mapLightboxImg" src="" alt="" />
+      <a id="mapLightboxOpen" class="btn-secondary map-lightbox-open" href="#" target="_blank" rel="noopener">Open in new tab</a>
+    </div>
+  </dialog>
+
+  <script src="/static/site-nav.js"></script>
+  <script src="/static/maps.js"></script>
+</body>
+</html>
