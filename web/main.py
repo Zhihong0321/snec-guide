@@ -9,9 +9,10 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from web.chat_models import DEFAULT_CHAT_MODEL, models_for_api, resolve_model
+from web.images import MAX_IMAGES_PER_MESSAGE, preprocess_images
 from web.llm import stream_chat
 from web.env import ROOT
 from web.maps_api import router as maps_router
@@ -40,14 +41,24 @@ app.include_router(maps_router)
 
 class ChatMessage(BaseModel):
     role: str
-    content: str
+    content: str = ""
+    images: list[str] = Field(default_factory=list, max_length=MAX_IMAGES_PER_MESSAGE)
 
 
 class ChatRequest(BaseModel):
-    message: str = Field(..., min_length=1, max_length=4000)
+    message: str = Field(default="", max_length=4000)
     history: list[ChatMessage] = Field(default_factory=list)
     model: str | None = Field(default=None, max_length=128)
     web_search: bool | None = None
+    images: list[str] = Field(default_factory=list, max_length=MAX_IMAGES_PER_MESSAGE)
+
+    @model_validator(mode="after")
+    def require_message_or_images(self) -> "ChatRequest":
+        has_text = bool(self.message.strip())
+        has_images = any((img or "").strip() for img in self.images)
+        if not has_text and not has_images:
+            raise ValueError("Message or at least one image is required.")
+        return self
 
 
 def resolve_web_search(user_wants: bool | None) -> bool:
@@ -127,18 +138,48 @@ async def health():
 @app.post("/api/chat")
 async def chat(req: ChatRequest):
     try:
-        resolve_model(req.model)
+        model = resolve_model(req.model)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
-    history = [{"role": m.role, "content": m.content} for m in req.history]
+    raw_images = [img.strip() for img in req.images if (img or "").strip()]
+    if raw_images and not model.supports_images:
+        raise HTTPException(
+            status_code=400,
+            detail="Image attachments are only supported for MiniMax M2.7.",
+        )
+    try:
+        images = preprocess_images(raw_images) if raw_images else []
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+
+    history = []
+    for m in req.history:
+        turn: dict = {"role": m.role, "content": m.content}
+        turn_images = [img.strip() for img in m.images if (img or "").strip()]
+        if turn_images:
+            if not model.supports_images:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Image attachments are only supported for MiniMax M2.7.",
+                )
+            try:
+                turn["images"] = preprocess_images(turn_images)
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e)) from e
+        history.append(turn)
+
     user_message = req.message.strip()
     use_web_search = resolve_web_search(req.web_search)
 
     async def event_stream():
         try:
             async for token in stream_chat(
-                req.model, history, user_message, web_search=use_web_search
+                req.model,
+                history,
+                user_message,
+                web_search=use_web_search,
+                images=images or None,
             ):
                 yield token
         except Exception as e:

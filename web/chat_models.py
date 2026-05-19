@@ -10,6 +10,7 @@ class ChatModel:
     id: str
     label: str
     provider: str  # "gemini" | "openai"
+    supports_images: bool = False
 
 
 DEFAULT_GEMINI_ID = os.environ.get("GEMINI_MODEL", "gemini-3.1-flash-lite")
@@ -17,10 +18,17 @@ DEFAULT_OPENAI_ID = os.environ.get("OPENAI_MODEL", "MiniMax-M2.7")
 DEFAULT_CHAT_MODEL = os.environ.get("DEFAULT_CHAT_MODEL", DEFAULT_OPENAI_ID)
 
 CHAT_MODELS: tuple[ChatModel, ...] = (
-    ChatModel(DEFAULT_OPENAI_ID, "MiniMax M2.7", "openai"),
+    ChatModel(DEFAULT_OPENAI_ID, "MiniMax M2.7", "openai", supports_images=True),
     ChatModel(DEFAULT_GEMINI_ID, "Gemini 3.1 Flash Lite", "gemini"),
     ChatModel("deepseek-v4-flash", "DeepSeek V4 Flash", "openai"),
 )
+
+
+def model_supports_images(model_id: str | None) -> bool:
+    try:
+        return resolve_model(model_id).supports_images
+    except ValueError:
+        return False
 
 
 def resolve_model(model_id: str | None) -> ChatModel:
@@ -57,6 +65,7 @@ def models_for_api() -> list[dict]:
                 "label": m.label,
                 "provider": m.provider,
                 "available": avail,
+                "supports_images": m.supports_images,
             }
         )
     return out

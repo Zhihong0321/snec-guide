@@ -5,14 +5,23 @@ const sendBtn = document.getElementById("send");
 const statusEl = document.getElementById("status");
 const modelSelect = document.getElementById("modelSelect");
 const webSearchToggle = document.getElementById("webSearchToggle");
+const imageInput = document.getElementById("imageInput");
+const attachBtn = document.getElementById("attachBtn");
+const imagePreview = document.getElementById("imagePreview");
 
 const MODEL_STORAGE_KEY = "snec_chat_model";
 const WEB_SEARCH_STORAGE_KEY = "snec_web_search";
+const MAX_IMAGE_DIM = 1920;
+const MAX_IMAGES = 4;
 
-/** @type {{role: string, content: string}[]} */
+/** @type {{role: string, content: string, images?: string[]}[]} */
 let history = [];
 /** @type {string} */
 let selectedModel = "";
+/** @type {{id: string, supports_images?: boolean, available?: boolean}[]} */
+let modelCatalog = [];
+/** @type {string[]} */
+let pendingImages = [];
 
 const SUGGESTIONS = [
   "Where is LONGi booth?",
@@ -56,11 +65,29 @@ function formatAssistantHtml(raw) {
   return linkifyAssistantContent(escapeHtml(raw));
 }
 
-function appendMessage(role, content, extraClass = "") {
+function appendMessage(role, content, extraClass = "", images = []) {
   const el = document.createElement("div");
   el.className = `msg ${role} ${extraClass}`.trim();
   if (role === "assistant") {
     el.innerHTML = formatAssistantHtml(content);
+  } else if (images.length) {
+    if (content) {
+      const text = document.createElement("div");
+      text.className = "msg-text";
+      text.textContent = content;
+      el.appendChild(text);
+    }
+    const row = document.createElement("div");
+    row.className = "msg-images";
+    for (const src of images) {
+      const img = document.createElement("img");
+      img.src = src;
+      img.alt = "Attached image";
+      img.className = "msg-user-img";
+      img.loading = "lazy";
+      row.appendChild(img);
+    }
+    el.appendChild(row);
   } else {
     el.textContent = content;
   }
@@ -92,8 +119,110 @@ function showWelcome() {
   chat.appendChild(el);
 }
 
+function selectedModelSupportsImages() {
+  const m = modelCatalog.find((x) => x.id === getSelectedModel());
+  return Boolean(m?.supports_images);
+}
+
+function updateAttachUi() {
+  const on = selectedModelSupportsImages();
+  attachBtn.hidden = !on;
+  if (!on) {
+    pendingImages = [];
+    renderImagePreview();
+    imageInput.value = "";
+  }
+}
+
+function loadImageFile(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(img);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Could not read image."));
+    };
+    img.src = url;
+  });
+}
+
+function resizeImageToDataUrl(img) {
+  let { width, height } = img;
+  if (width > MAX_IMAGE_DIM || height > MAX_IMAGE_DIM) {
+    const scale = Math.min(MAX_IMAGE_DIM / width, MAX_IMAGE_DIM / height);
+    width = Math.max(1, Math.round(width * scale));
+    height = Math.max(1, Math.round(height * scale));
+  }
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas not supported.");
+  ctx.drawImage(img, 0, 0, width, height);
+  return canvas.toDataURL("image/jpeg", 0.85);
+}
+
+async function preprocessImageFile(file) {
+  const img = await loadImageFile(file);
+  return resizeImageToDataUrl(img);
+}
+
+function renderImagePreview() {
+  imagePreview.innerHTML = "";
+  if (!pendingImages.length) {
+    imagePreview.hidden = true;
+    return;
+  }
+  imagePreview.hidden = false;
+  pendingImages.forEach((src, index) => {
+    const wrap = document.createElement("div");
+    wrap.className = "image-preview-item";
+    const thumb = document.createElement("img");
+    thumb.src = src;
+    thumb.alt = `Attachment ${index + 1}`;
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "image-preview-remove";
+    remove.setAttribute("aria-label", "Remove image");
+    remove.textContent = "×";
+    remove.addEventListener("click", () => {
+      pendingImages.splice(index, 1);
+      renderImagePreview();
+    });
+    wrap.appendChild(thumb);
+    wrap.appendChild(remove);
+    imagePreview.appendChild(wrap);
+  });
+}
+
+async function addImageFiles(fileList) {
+  if (!selectedModelSupportsImages()) return;
+  const files = Array.from(fileList || []).filter((f) => f.type.startsWith("image/"));
+  if (!files.length) return;
+  const room = MAX_IMAGES - pendingImages.length;
+  if (room <= 0) {
+    statusEl.textContent = `Max ${MAX_IMAGES} images`;
+    statusEl.className = "status warn";
+    return;
+  }
+  for (const file of files.slice(0, room)) {
+    try {
+      pendingImages.push(await preprocessImageFile(file));
+    } catch {
+      statusEl.textContent = "Image failed";
+      statusEl.className = "status warn";
+    }
+  }
+  renderImagePreview();
+}
+
 function populateModels(data) {
   const models = data.models || [];
+  modelCatalog = models;
   const saved = localStorage.getItem(MODEL_STORAGE_KEY);
   modelSelect.innerHTML = "";
   for (const m of models) {
@@ -114,6 +243,7 @@ function populateModels(data) {
     "";
   selectedModel = pick;
   if (pick) modelSelect.value = pick;
+  updateAttachUi();
 }
 
 function getSelectedModel() {
@@ -123,6 +253,13 @@ function getSelectedModel() {
 modelSelect.addEventListener("change", () => {
   selectedModel = modelSelect.value;
   localStorage.setItem(MODEL_STORAGE_KEY, selectedModel);
+  updateAttachUi();
+});
+
+attachBtn.addEventListener("click", () => imageInput.click());
+imageInput.addEventListener("change", () => {
+  addImageFiles(imageInput.files);
+  imageInput.value = "";
 });
 
 function initWebSearchToggle(data) {
@@ -175,14 +312,19 @@ async function checkHealth() {
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   const text = input.value.trim();
-  if (!text) return;
+  const images = pendingImages.slice();
+  if (!text && !images.length) return;
 
   input.value = "";
   input.style.height = "auto";
+  pendingImages = [];
+  renderImagePreview();
   sendBtn.disabled = true;
 
-  appendMessage("user", text);
-  history.push({ role: "user", content: text });
+  appendMessage("user", text, "", images);
+  const userTurn = { role: "user", content: text };
+  if (images.length) userTurn.images = images;
+  history.push(userTurn);
 
   const assistantEl = appendMessage("assistant", "", "typing");
 
@@ -192,6 +334,7 @@ form.addEventListener("submit", async (e) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         message: text,
+        images,
         history: history.slice(0, -1),
         model: getSelectedModel(),
         web_search: getWebSearchEnabled(),

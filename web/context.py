@@ -395,7 +395,25 @@ def build_messages(history: list[dict], user_message: str, *, web_search: bool =
     return contents
 
 
-def build_openai_messages(history: list[dict], user_message: str, *, web_search: bool = True) -> list[dict]:
+def _openai_user_content(text: str, images: list[str] | None = None) -> str | list[dict]:
+    imgs = [u for u in (images or []) if u]
+    if not imgs:
+        return text
+    parts: list[dict] = []
+    if text:
+        parts.append({"type": "text", "text": text})
+    for url in imgs:
+        parts.append({"type": "image_url", "image_url": {"url": url}})
+    return parts or [{"type": "text", "text": " "}]
+
+
+def build_openai_messages(
+    history: list[dict],
+    user_message: str,
+    *,
+    web_search: bool = True,
+    images: list[str] | None = None,
+) -> list[dict]:
     system = build_system_prompt(user_message, web_search=web_search)
     messages: list[dict] = [{"role": "system", "content": system}]
     for turn in history[-10:]:
@@ -404,6 +422,11 @@ def build_openai_messages(history: list[dict], user_message: str, *, web_search:
             role = "assistant"
         elif role != "user":
             role = "user"
-        messages.append({"role": role, "content": turn.get("content", "")})
-    messages.append({"role": "user", "content": user_message})
+        content = turn.get("content", "")
+        if role == "user" and turn.get("images"):
+            content = _openai_user_content(content, turn["images"])
+        messages.append({"role": role, "content": content})
+    messages.append(
+        {"role": "user", "content": _openai_user_content(user_message, images)},
+    )
     return messages

@@ -13,10 +13,13 @@ async def stream_chat(
     user_message: str,
     *,
     web_search: bool = True,
+    images: list[str] | None = None,
 ) -> AsyncIterator[str]:
     model: ChatModel = resolve_model(model_id)
     if model.provider == "openai":
-        messages = build_openai_messages(history, user_message, web_search=web_search)
+        messages = build_openai_messages(
+            history, user_message, web_search=web_search, images=images
+        )
         async for token in stream_openai_chat(messages, model.id):
             yield token
     else:
