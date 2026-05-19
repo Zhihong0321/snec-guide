@@ -395,16 +395,19 @@ def build_messages(history: list[dict], user_message: str, *, web_search: bool =
     return contents
 
 
+# MiniMax / OKAI gateway rejects multimodal messages with no text part (error 2013).
+_IMAGE_ONLY_TEXT = "Please analyze the attached image(s)."
+
+
 def _openai_user_content(text: str, images: list[str] | None = None) -> str | list[dict]:
     imgs = [u for u in (images or []) if u]
     if not imgs:
         return text
-    parts: list[dict] = []
-    if text:
-        parts.append({"type": "text", "text": text})
+    body = (text or "").strip() or _IMAGE_ONLY_TEXT
+    parts: list[dict] = [{"type": "text", "text": body}]
     for url in imgs:
         parts.append({"type": "image_url", "image_url": {"url": url}})
-    return parts or [{"type": "text", "text": " "}]
+    return parts
 
 
 def build_openai_messages(

@@ -32,6 +32,7 @@ BASE_COLUMNS = """
     address TEXT,
     company_profile TEXT,
     enriched_at TIMESTAMP,
+    enrichment_status VARCHAR(100) NOT NULL DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 """
@@ -46,6 +47,8 @@ EXHIBITOR_INDEXES = """
         ON snec26_exhibitors (hall, booth);
     CREATE INDEX IF NOT EXISTS idx_snec26_exhibitors_country_state
         ON snec26_exhibitors (country, state_province);
+    CREATE INDEX IF NOT EXISTS idx_snec26_exhibitors_enrichment_status
+        ON snec26_exhibitors (enrichment_status);
 """
 
 # Anonymous browser users (cookie = UUID)
@@ -132,6 +135,7 @@ def setup_database():
             "address": "TEXT",
             "company_profile": "TEXT",
             "enriched_at": "TIMESTAMP",
+            "enrichment_status": "VARCHAR(100) NOT NULL DEFAULT 'pending'",
         }
         for col, col_type in migrations.items():
             if col not in existing:
@@ -139,6 +143,15 @@ def setup_database():
                     f"ALTER TABLE {TABLE_NAME} ADD COLUMN {col} {col_type};"
                 )
                 print(f"[+] Added column {col}")
+
+        if "enrichment_status" in existing or "enrichment_status" in migrations:
+            cursor.execute(
+                f"""
+                UPDATE {TABLE_NAME}
+                SET enrichment_status = 'pending'
+                WHERE enrichment_status IS NULL OR TRIM(enrichment_status) = '';
+                """
+            )
 
         cursor.execute(EXHIBITOR_INDEXES)
         cursor.execute(WEB_USERS_DDL)
