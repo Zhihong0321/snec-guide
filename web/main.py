@@ -155,6 +155,11 @@ async def chat(req: ChatRequest):
             status_code=400,
             detail="Image attachments are only supported for MiniMax M2.7.",
         )
+    if raw_images and not os.environ.get("UNIAPI_KEY", "").strip():
+        raise HTTPException(
+            status_code=400,
+            detail="UNIAPI_KEY is required for image analysis (UniAPI Gemini vision).",
+        )
     try:
         images = preprocess_images(raw_images) if raw_images else []
     except ValueError as e:

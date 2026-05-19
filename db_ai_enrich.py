@@ -715,6 +715,9 @@ def main():
         return
 
     with psycopg2.connect(DB_URL) as conn:
+        import enrichment_ops as eops
+
+        eops.ensure_schema(conn)
         ensure_schema(conn)
 
         if opts["show_status"]:
@@ -752,13 +755,15 @@ def main():
             return
 
         if opts["complete"]:
+            import enrichment_ops as eops
+
             payload = load_complete_payload(opts)
             rid = opts["exhibitor_id"] or payload.get("id")
             if rid is None:
                 raise SystemExit("--complete requires --id= or \"id\" in JSON")
             rid = int(rid)
             updates = apply_cursor_update(conn, rid, agent_id, payload)
-            mark_done(conn, rid, agent_id, dry_run=False)
+            eops.mark_done(conn, rid, agent_id)
             print(f"[+] id={rid} updated {list(updates.keys()) or '(no fields)'} → DONE")
             return
 
@@ -798,7 +803,11 @@ def main():
                     row = cur.fetchone()
                 row = dict(row) if row else None
             else:
-                row = claim_next(conn, agent_id, exhibitor_id=target_id)
+                import enrichment_ops as eops
+
+                row = eops.claim_next(
+                    conn, agent_id, "auto", exhibitor_id=target_id
+                )
                 if target_id is not None:
                     target_id = None
 
@@ -816,13 +825,18 @@ def main():
                     dry_run=opts["dry_run"],
                     use_web=opts["use_web"],
                 )
-                mark_done(conn, rid, agent_id, dry_run=opts["dry_run"])
                 if not opts["dry_run"]:
+                    import enrichment_ops as eops
+
+                    eops.mark_done(conn, rid, agent_id)
                     print("    → enrichment_status=DONE")
                 ok += 1
             except Exception as e:
                 print(f"[-] id={rid} failed: {e}")
-                release_pending(conn, rid, agent_id, dry_run=opts["dry_run"])
+                if not opts["dry_run"]:
+                    import enrichment_ops as eops
+
+                    eops.release_pending(conn, rid, agent_id)
                 if not opts["dry_run"]:
                     print("    → enrichment_status=pending (released)")
 

@@ -63,6 +63,10 @@ postgresql://postgres:PASSWORD@host:port/railway
 
 **Table:** `snec26_exhibitors`
 
+**Live dashboard (localhost):** start the app with `python run_web.py` → opens **http://127.0.0.1:8080/enrich**
+
+Shows: active agents, engine type (Gemini CLI / Cursor IDE), exhibitor being updated, queue counts. Auto-refreshes every 3s.
+
 ---
 
 ## Cursor CLI (no API key)

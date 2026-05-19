@@ -1095,3 +1095,153 @@ body.reg-locked {
   margin-top: 0.75rem;
   text-decoration: none;
 }
+
+/* Enrichment dashboard (/enrich) */
+.enrich-hero-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.enrich-poll {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.enrich-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
+}
+
+.enrich-stat {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.85rem 1rem;
+  text-align: center;
+}
+
+.enrich-stat-n {
+  display: block;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1.2;
+}
+
+.enrich-stat--active .enrich-stat-n {
+  color: #5eb8ff;
+}
+
+.enrich-stat--done .enrich-stat-n {
+  color: #6bcf7f;
+}
+
+.enrich-workers {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.enrich-worker-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.9rem 1rem;
+}
+
+.enrich-worker-card.is-working {
+  border-color: rgba(94, 184, 255, 0.45);
+  box-shadow: 0 0 0 1px rgba(94, 184, 255, 0.15);
+}
+
+.enrich-worker-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.enrich-worker-ex a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.enrich-worker-ex a:hover {
+  text-decoration: underline;
+}
+
+.enrich-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.enrich-badge--type {
+  background: rgba(245, 166, 35, 0.15);
+  color: var(--accent);
+}
+
+.enrich-badge--active {
+  background: rgba(94, 184, 255, 0.2);
+  color: #8ecfff;
+}
+
+.enrich-badge--idle {
+  background: rgba(143, 163, 184, 0.15);
+}
+
+.enrich-badge--warn {
+  background: rgba(255, 120, 80, 0.2);
+  color: #ffb090;
+}
+
+.enrich-table-wrap {
+  overflow-x: auto;
+  margin-top: 0.75rem;
+}
+
+.enrich-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.enrich-table th,
+.enrich-table td {
+  text-align: left;
+  padding: 0.55rem 0.65rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.enrich-table th {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 0.8rem;
+}
+
+.enrich-table a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.enrich-table code {
+  font-size: 0.85em;
+  color: #8ecfff;
+}

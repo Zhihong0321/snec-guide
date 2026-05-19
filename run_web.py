@@ -56,9 +56,11 @@ if __name__ == "__main__":
     if port != preferred:
         print(f"Port {preferred} busy — using {port} instead.", flush=True)
 
+    enrich_url = f"http://127.0.0.1:{port}/enrich"
     print("", flush=True)
     print("  SNEC 2026 Guide", flush=True)
-    print(f"  {url}", flush=True)
+    print(f"  Home:       {url}", flush=True)
+    print(f"  Enrichment: {enrich_url}", flush=True)
     print("  Leave this window open. Close it to stop the app.", flush=True)
     print("", flush=True)
 

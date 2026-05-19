@@ -53,19 +53,25 @@ def gemini_api_key() -> str:
     return key
 
 
+def uniapi_configured() -> bool:
+    return bool(os.environ.get("UNIAPI_KEY", "").strip())
+
+
 def models_for_api() -> list[dict]:
-    gemini_ok = bool(os.environ.get("UNIAPI_KEY"))
+    gemini_ok = uniapi_configured()
     openai_ok = bool(os.environ.get("OPENAI_API_KEY"))
     out = []
     for m in CHAT_MODELS:
         avail = openai_ok if m.provider == "openai" else gemini_ok
+        # MiniMax chat + UniAPI Gemini vision for attachments
+        images_ok = m.supports_images and openai_ok and gemini_ok
         out.append(
             {
                 "id": m.id,
                 "label": m.label,
                 "provider": m.provider,
                 "available": avail,
-                "supports_images": m.supports_images,
+                "supports_images": images_ok,
             }
         )
     return out
