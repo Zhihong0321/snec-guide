@@ -5,6 +5,7 @@
     { id: "chat", href: "/chat", label: "AI chat" },
     { id: "guides", href: "/maps", label: "Guides" },
     { id: "visit", href: "/exhibitor", label: "Visit log" },
+    { id: "register", href: "https://pv.snec.org.cn/proRegister?locale=en-US", label: "SNEC Registration", external: true },
   ];
 
   function renderNav() {
@@ -13,7 +14,8 @@
     const active = document.body.dataset.navActive || "";
     nav.innerHTML = ITEMS.map((item) => {
       const cls = item.id === active ? ' class="active"' : "";
-      return `<a href="${item.href}"${cls}>${item.label}</a>`;
+      const ext = item.external ? ' target="_blank" rel="noopener noreferrer"' : "";
+      return `<a href="${item.href}"${cls}${ext}>${item.label}</a>`;
     }).join("");
   }
 
