@@ -98,6 +98,26 @@ async def get_me(request: Request, response: Response):
     return _get_or_create_user(request, response)
 
 
+def display_name_from_request(request: Request) -> str:
+    """Read-only lookup of the visitor's display name from the snec_uid cookie.
+
+    Safe to call outside the /api/me flow: never creates rows or sets cookies.
+    Returns "" when there is no valid cookie, no user row, or no name set.
+    """
+    raw = request.cookies.get(COOKIE_NAME)
+    if not raw:
+        return ""
+    try:
+        uuid.UUID(raw)
+    except ValueError:
+        return ""
+    try:
+        u = _get_user(raw)
+    except Exception:
+        return ""
+    return (u["display_name"] or "").strip() if u else ""
+
+
 class MeUpdate(BaseModel):
     display_name: str = Field("", max_length=100)
 

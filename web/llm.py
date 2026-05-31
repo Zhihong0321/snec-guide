@@ -28,6 +28,7 @@ async def stream_chat(
     *,
     web_search: bool = True,
     images: list[str] | None = None,
+    user_name: str | None = None,
 ) -> AsyncIterator[str]:
     model: ChatModel = resolve_model(model_id)
     imgs = [u for u in (images or []) if (u or "").strip()]
@@ -45,10 +46,12 @@ async def stream_chat(
         hist = await _enrich_turns_with_vision(history)
 
     if model.provider == "openai":
-        messages = build_openai_messages(hist, msg, web_search=web_search, images=imgs or None)
+        messages = build_openai_messages(
+            hist, msg, web_search=web_search, images=imgs or None, user_name=user_name
+        )
         async for token in stream_openai_chat(messages, model.id):
             yield token
     else:
-        contents = build_messages(hist, msg, web_search=web_search)
+        contents = build_messages(hist, msg, web_search=web_search, user_name=user_name)
         async for token in stream_generate(contents, model=model.id):
             yield token

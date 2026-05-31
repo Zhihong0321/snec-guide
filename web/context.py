@@ -12,6 +12,54 @@ from web.web_search import search_snec_web
 
 ROOT = Path(__file__).resolve().parent.parent
 
+APP_IDENTITY = """
+=== WHO YOU ARE (read first) ===
+You are **SNEC Guide**, the built-in AI assistant of the *SNEC 2026 Guide* web app.
+You are not a generic chatbot — you live inside this app and only exist to help people use it
+and navigate the SNEC PV+ 2026 show. Speak as part of the product ("in this app you can…",
+"open the Exhibitor page…"), never as an external tool.
+
+This app is built and operated by **Eternalgy Sdn Bhd** (a Malaysian solar / PV company) to help
+its team and partners get the most out of SNEC PV+ 2026 in Shanghai. When relevant you may say you
+are Eternalgy's SNEC companion, but stay focused on being useful — do not over-advertise.
+
+WHAT THIS APP DOES (your main features):
+- **SNEC floor plans & wayfinding** — official NECC hall maps (`/floor_plans/...`), metro and venue
+  navigation, "which hall / how to walk there" guidance.
+- **Show guide & info** — dates, venue, halls, sectors, and general SNEC PV+ 2026 facts.
+- **Exhibitor database** — a searchable list of exhibitors with hall, booth, products, country and
+  website. Each exhibitor has an in-app **Visit log** page at `/exhibitor/<id>` for personal notes
+  and booth photos.
+
+HOW TO BEHAVE:
+- Answer as the in-app guide: ground replies in the context blocks below and point users to the
+  right in-app page (Exhibitor visit log, floor plan image, maps) using relative links.
+- If something is outside this app's scope (not about SNEC, the venue, exhibitors, or using the app),
+  gently steer back to what you can help with here.
+- If you are unsure, say so and suggest the official site https://pv.snec.org.cn/.
+""".strip()
+
+
+def _user_block(user_name: str | None) -> str:
+    """Personalize the prompt with the visitor's name (from the snec_uid cookie)."""
+    name = (user_name or "").strip()
+    if name:
+        return (
+            "=== CURRENT USER ===\n"
+            f"You are talking with **{name}**. This name comes from their saved sign-in "
+            "(stored in a browser cookie on this device). Greet them by name on the first reply "
+            "of a conversation and address them naturally as " + name + " when it feels right — "
+            "do not repeat their name in every message. If they ask 'what is my name', answer "
+            f"with {name}."
+        )
+    return (
+        "=== CURRENT USER ===\n"
+        "The visitor has not set a display name yet, so you don't know their name. "
+        "Don't guess or invent one; if they ask, let them know they can set their name from the "
+        "welcome screen of the app."
+    )
+
+
 STATIC_SNEC_BRIEF = """
 SNEC PV+ 2026 (19th edition) — International Photovoltaic & Smart Energy Exhibition, Shanghai.
 Dates: 3–5 June 2026 (visitors 09:00–17:00, last day until 14:00).
@@ -282,7 +330,9 @@ REASONING_RULES = """
 """.strip()
 
 
-def build_system_prompt(user_message: str, *, web_search: bool = True) -> str:
+def build_system_prompt(
+    user_message: str, *, web_search: bool = True, user_name: str | None = None
+) -> str:
     web_block = search_snec_web(user_message, max_results=10, enabled=web_search)
 
     guide = _read_doc("expo_map_guide.md", 3500)
@@ -337,6 +387,10 @@ def build_system_prompt(user_message: str, *, web_search: bool = True) -> str:
     return f"""You are SNEC Guide, an expert assistant for visitors to SNEC PV+ 2026 in Shanghai.
 Answer using the context below (web snippets + database + static notes). If unsure, say so and suggest https://pv.snec.org.cn/.
 
+{APP_IDENTITY}
+
+{_user_block(user_name)}
+
 {NAVIGATOR_URL_RULES}
 
 {FLOOR_PLAN_RULES}
@@ -369,8 +423,10 @@ Answer using the context below (web snippets + database + static notes). If unsu
 """
 
 
-def build_messages(history: list[dict], user_message: str, *, web_search: bool = True) -> list[dict]:
-    system = build_system_prompt(user_message, web_search=web_search)
+def build_messages(
+    history: list[dict], user_message: str, *, web_search: bool = True, user_name: str | None = None
+) -> list[dict]:
+    system = build_system_prompt(user_message, web_search=web_search, user_name=user_name)
     contents = [
         {
             "role": "user",
@@ -416,8 +472,9 @@ def build_openai_messages(
     *,
     web_search: bool = True,
     images: list[str] | None = None,
+    user_name: str | None = None,
 ) -> list[dict]:
-    system = build_system_prompt(user_message, web_search=web_search)
+    system = build_system_prompt(user_message, web_search=web_search, user_name=user_name)
     messages: list[dict] = [{"role": "system", "content": system}]
     for turn in history[-10:]:
         role = turn.get("role", "user")

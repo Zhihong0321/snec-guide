@@ -5,7 +5,7 @@ import web.env  # noqa: F401 — load .env before other web imports
 
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -16,7 +16,7 @@ from web.images import MAX_IMAGES_PER_MESSAGE, preprocess_images
 from web.llm import stream_chat
 from web.env import ROOT
 from web.maps_api import router as maps_router
-from web.visit_api import router as visit_router
+from web.visit_api import router as visit_router, display_name_from_request
 from web.web_search import server_web_search_enabled
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -155,11 +155,16 @@ async def health():
 
 
 @app.post("/api/chat")
-async def chat(req: ChatRequest):
+async def chat(req: ChatRequest, request: Request):
     try:
         model = resolve_model(req.model)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
+
+    try:
+        user_name = display_name_from_request(request)
+    except Exception:
+        user_name = ""
 
     raw_images = [img.strip() for img in req.images if (img or "").strip()]
     if raw_images and not model.supports_images:
@@ -204,6 +209,7 @@ async def chat(req: ChatRequest):
                 user_message,
                 web_search=use_web_search,
                 images=images or None,
+                user_name=user_name,
             ):
                 yield token
         except Exception as e:
