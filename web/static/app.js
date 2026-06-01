@@ -38,31 +38,86 @@ function escapeHtml(s) {
     .replace(/"/g, "&quot;");
 }
 
-/** Whitelist: exhibitor links + floor plan images in assistant messages */
-function linkifyAssistantContent(htmlEscaped) {
-  let out = htmlEscaped.replace(
-    /!\[([^\]]*)\]\((\/floor_plans\/[^)\s]+)\)/gi,
-    (_m, alt, path) =>
-      `<a href="${path}" target="_blank" rel="noopener" class="floor-plan-link">` +
-      `<img src="${path}" alt="${alt}" class="floor-plan-img" loading="lazy" /></a>`,
-  );
-  out = out.replace(
-    /\[([^\]]+)\]\(\/exhibitor\/(\d+)\)/g,
-    (_m, label, id) => `<a href="/exhibitor/${id}">${label}</a>`,
-  );
-  out = out.replace(
-    /(?<!href=")(?<!\>)\/exhibitor\/(\d+)\b/g,
-    (_m, id) => `<a href="/exhibitor/${id}">/exhibitor/${id}</a>`,
-  );
-  out = out.replace(
-    /(?<!href=")(?<!\>)(?<!\]\()(\/floor_plans\/[^\s<]+\.(?:jpg|jpeg|png|webp))/gi,
-    (_m, path) => `<a href="${path}" target="_blank" rel="noopener">${path}</a>`,
-  );
-  return out;
+/** Escape a value for use inside a double-quoted HTML attribute. */
+function escapeAttr(s) {
+  return escapeHtml(String(s)).replace(/'/g, "&#39;");
 }
 
+/** Human-readable label from a floor-plan path, e.g. "Hall 5.2H". */
+function prettyPlanName(path) {
+  const file = path.split("/").pop().replace(/\.(jpg|jpeg|png|webp)$/i, "");
+  if (/overview/i.test(file)) return "NECC venue overview";
+  if (/plaza/i.test(file)) return "Central plaza";
+  const hall = file.match(/^(\d+(?:\.\d+)?[A-Za-z]?)$/);
+  if (hall) return `Hall ${hall[1]}`;
+  return file.replace(/[_-]+/g, " ");
+}
+
+/** Professional, self-contained floor-plan card with a graceful broken-image
+ *  fallback (no ugly broken-image icon) and a tap-to-enlarge affordance. */
+function floorPlanFigure(path, alt) {
+  const safe = escapeAttr(path);
+  const caption = (alt && alt.trim()) || prettyPlanName(path);
+  const cap = escapeHtml(caption);
+  return (
+    `<figure class="plan">` +
+    `<a href="${safe}" target="_blank" rel="noopener" class="plan-link">` +
+    `<img src="${safe}" alt="${escapeAttr(caption)}" class="plan-img" loading="lazy" ` +
+    `onerror="this.closest('.plan').classList.add('plan-broken')" ` +
+    `onload="this.closest('.plan').classList.remove('plan-broken')" />` +
+    `<span class="plan-fallback">📍 Map image unavailable — tap to open</span>` +
+    `<span class="plan-zoom">⤢ Tap to enlarge</span>` +
+    `</a>` +
+    `<figcaption class="plan-cap">📐 Floor plan · ${cap}</figcaption>` +
+    `</figure>`
+  );
+}
+
+/** Render assistant text safely. Generated HTML is stashed behind sentinel
+ *  tokens BEFORE escaping, so no rule can ever re-scan another rule's output
+ *  (the bug that mangled <img src> attributes into broken images). */
 function formatAssistantHtml(raw) {
-  return linkifyAssistantContent(escapeHtml(raw));
+  const tokens = [];
+  const stash = (html) => `\x00${tokens.push(html) - 1}\x00`;
+
+  // Tight, injection-safe path charset.
+  const PLAN = "\\/floor_plans\\/[A-Za-z0-9._-]+\\.(?:jpg|jpeg|png|webp)";
+
+  let s = raw;
+
+  // 1) Markdown floor-plan image: ![alt](/floor_plans/x.jpg)
+  s = s.replace(
+    new RegExp(`!\\[([^\\]]*)\\]\\((${PLAN})\\)`, "gi"),
+    (_m, alt, path) => stash(floorPlanFigure(path, alt)),
+  );
+  // 2) Raw <img ... src="/floor_plans/x.jpg" ...> the model sometimes emits
+  s = s.replace(
+    new RegExp(`<img\\b[^>]*?\\bsrc=["']?(${PLAN})["']?[^>]*?>`, "gi"),
+    (_m, path) => stash(floorPlanFigure(path, "")),
+  );
+  // 3) Markdown exhibitor link: [label](/exhibitor/123)
+  s = s.replace(
+    /\[([^\]]+)\]\(\/exhibitor\/(\d+)\)/g,
+    (_m, label, id) => stash(`<a href="/exhibitor/${id}">${escapeHtml(label)}</a>`),
+  );
+  // 4) Bare floor-plan path -> link
+  s = s.replace(
+    new RegExp(PLAN, "gi"),
+    (m) => stash(`<a href="${escapeAttr(m)}" target="_blank" rel="noopener">${escapeHtml(m)}</a>`),
+  );
+  // 5) Bare exhibitor path -> link
+  s = s.replace(
+    /\/exhibitor\/(\d+)\b/g,
+    (m, id) => stash(`<a href="/exhibitor/${id}">${escapeHtml(m)}</a>`),
+  );
+
+  // Escape everything the model produced, then apply light markdown.
+  s = escapeHtml(s)
+    .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<em>$2</em>");
+
+  // Restore the trusted, pre-built components.
+  return s.replace(/\x00(\d+)\x00/g, (_m, i) => tokens[Number(i)]);
 }
 
 function appendMessage(role, content, extraClass = "", images = []) {

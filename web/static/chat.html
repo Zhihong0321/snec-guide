@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#070b10" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>AI chat · SNEC 2026 Guide</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -27,6 +30,7 @@
     <main id="chat" class="chat" role="log" aria-live="polite"></main>
 
     <footer class="composer">
+      <div class="composer-inner">
       <div class="composer-bar" aria-label="Chat options">
         <label for="modelSelect" class="model-label">Model</label>
         <select id="modelSelect" class="model-select" title="Choose AI model"></select>
@@ -63,7 +67,8 @@
           </svg>
         </button>
       </form>
-      <p class="hint">MiniMax M2.7 + UniAPI Gemini for images (max 1920px) · exhibitor DB · web search</p>
+      <p class="hint">MiniMax M2.7 + UniAPI Gemini vision · grounded in the exhibitor database</p>
+      </div>
     </footer>
   </div>
   <script src="/static/site-nav.js"></script>
