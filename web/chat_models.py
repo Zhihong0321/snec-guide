@@ -15,7 +15,7 @@ class ChatModel:
 
 DEFAULT_GEMINI_ID = os.environ.get("GEMINI_MODEL", "gemini-3.1-flash-lite")
 DEFAULT_OPENAI_ID = os.environ.get("OPENAI_MODEL", "MiniMax-M2.7")
-DEFAULT_CHAT_MODEL = os.environ.get("DEFAULT_CHAT_MODEL", DEFAULT_OPENAI_ID)
+DEFAULT_CHAT_MODEL = os.environ.get("DEFAULT_CHAT_MODEL", DEFAULT_GEMINI_ID)
 
 CHAT_MODELS: tuple[ChatModel, ...] = (
     ChatModel(DEFAULT_OPENAI_ID, "MiniMax M2.7", "openai", supports_images=True),
